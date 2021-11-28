@@ -18,23 +18,57 @@ window.requestAnimationFrame(main);
 
 function setup(){
 
-    new bezier(bezarr,100,100,400,100,0)
-    new bezier(bezarr,400,200,100,200,0);
-    new bezier(bezarr,100,300,300,400,0,bezarr[1],bezarr[0]);
 
-
-    new bezier(bezarr,100,500,300,500,0)
-    new bezier(bezarr,300,500,300,600,0)
-    new bezier(bezarr,300,600,100,600,0)
-
-    new bezier(bezarr,300,600,300,500,0,bezarr[3],bezarr[4])
-    new bezier(bezarr,300,600,300,500,0,bezarr[4],bezarr[5])
-    new bezier(bezarr,300,600,300,500,0,bezarr[6],bezarr[7])
+    anybez(100,100,140,140,8);
 
 }
 
 let lastRenderTime = 0;
 let GameSpeed = 60;
+
+function anybez(x,y,w,h,n){
+
+        const anchors = [];
+
+        let lastx = x;
+        let lasty = y;
+        for(let i=0;i<n;i++){
+            let newx = lastx;
+            let newy = lasty+h;
+            if(i%2==0){
+                newx= lastx+w;
+                newy = lasty;
+            }else
+            if(i%3==0){
+                newx= lastx;
+                newy = lasty-h;
+            }else
+            if(i%4==0){
+                newx= lastx+w;
+                newy = lasty-h;
+            }
+
+            anchors.push(new bezier(bezarr,lastx, lasty, newx, newy,  0));
+            lastx = newx;
+            lasty = newy;        
+        }
+
+
+        
+        let lastgroup = {...anchors};
+        for(let i=1;i<n;i++){
+            let ni = n-i;
+            const tempgroup = {...lastgroup};
+            lastgroup = [];
+            for(let nii=0;nii<ni;nii++){
+                lastgroup.push(new bezier(bezarr, 0, 0, 0, 0, 0,tempgroup[nii],tempgroup[nii+1]));
+                
+            }
+        }
+
+}
+
+
 
 function main(currentTime){
     window.requestAnimationFrame(main);
@@ -62,22 +96,37 @@ bezarr.forEach(bez=>{bez.render(can.ctx)});
 function distance(x1,x2,y1,y2){return Math.sqrt(((x2-x1)**2)+((y2-y1)**2))}
 function randomrange(min, max) {return Math.floor(Math.random() * (max - min + 1) + min)}
 
-
 let mousedown = false;
+let selp = null;
 
 addEventListener("mousemove",(e)=>{
 
-    if(!mousedown)return;
-    bezarr.forEach(bez=>{
-        if(distance(e.clientX,bez.x1,e.clientY,bez.y1)<50){
-            bez.x1 = e.clientX;
-            bez.y1 = e.clientY;
+    if(!mousedown){
+        selp = null;
+        return;
+    };
+    
+    if(selp==null){
+        bezarr.forEach(bez=>{        
+            if(distance(e.clientX,bez.x1,e.clientY,bez.y1)<50||distance(e.clientX,bez.x2,e.clientY,bez.y2)<50){
+                if(bez.parent1==null&&bez.parent2==null){
+                    selp = bez;
+                }
+            }
+        });
+
+    }else{
+
+        if(distance(e.clientX,selp.x1,e.clientY,selp.y1)<50){
+            selp.x1 = e.clientX;
+            selp.y1 = e.clientY;
+        }else
+        if(distance(e.clientX,selp.x2,e.clientY,selp.y2)<50){
+            selp.x2 = e.clientX;
+            selp.y2 = e.clientY;
         }
-        if(distance(e.clientX,bez.x2,e.clientY,bez.y2)<50){
-            bez.x2 = e.clientX;
-            bez.y2 = e.clientY;
-        }
-    });
+
+    }
     
 })
 
